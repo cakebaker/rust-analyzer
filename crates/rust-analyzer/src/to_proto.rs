@@ -1,7 +1,7 @@
 //! Conversion of rust-analyzer specific types to lsp_types equivalents.
 use std::{
     iter::once,
-    path::{self, Path},
+    path,
     sync::atomic::{AtomicU32, Ordering},
 };
 
@@ -14,6 +14,7 @@ use ide::{
 };
 use itertools::Itertools;
 use serde_json::to_value;
+use vfs::AbsPath;
 
 use crate::{
     cargo_target_spec::CargoTargetSpec,
@@ -622,10 +623,9 @@ pub(crate) fn url(snap: &GlobalStateSnapshot, file_id: FileId) -> lsp_types::Url
 /// This will only happen when processing windows paths.
 ///
 /// When processing non-windows path, this is essentially the same as `Url::from_file_path`.
-pub(crate) fn url_from_abs_path(path: &Path) -> lsp_types::Url {
-    assert!(path.is_absolute());
+pub(crate) fn url_from_abs_path(path: &AbsPath) -> lsp_types::Url {
     let url = lsp_types::Url::from_file_path(path).unwrap();
-    match path.components().next() {
+    match path.as_ref().components().next() {
         Some(path::Component::Prefix(prefix))
             if matches!(prefix.kind(), path::Prefix::Disk(_) | path::Prefix::VerbatimDisk(_)) =>
         {
